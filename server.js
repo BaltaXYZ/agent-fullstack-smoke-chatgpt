@@ -4,23 +4,9 @@ const { Pool } = require('pg');
 const app = express();
 const port = process.env.PORT || 3000;
 
-
-// Parse DATABASE_URL to support psql connection string format
-let connectionString = process.env.DATABASE_URL || '';
-if (connectionString.startsWith('psql ')) {
-  // Remove 'psql ' prefix
-  connectionString = connectionString.slice(5).trim();
-}
-// Remove surrounding single or double quotes if present
-if (
-  (connectionString.startsWith("'") && connectionString.endsWith("'")) ||
-  (connectionString.startsWith('"') && connectionString.endsWith('"'))
-) {
-  connectionString = connectionString.slice(1, -1);
-}
 // Create a connection pool to Postgres
 const pool = new Pool({
-  coconnectionString,
+  connectionString: process.env.DATABASE_URL,
   ssl: {
     rejectUnauthorized: false
   }
