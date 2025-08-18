@@ -15,6 +15,14 @@ const pool = new Pool({
 app.use(express.json());
 app.use(express.static('public'));
 
+
+// Ensure notes table exists
+pool.query('CREATE TABLE IF NOT EXISTS notes (id SERIAL PRIMARY KEY, content TEXT NOT NULL, created_at TIMESTAMP NOT NULL DEFAULT NOW())').catch((err) => {
+  console.error('Error creating notes table:', err);
+});
+
+
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
@@ -22,7 +30,9 @@ app.get('/health', (req, res) => {
 
 // Get latest 50 notes
 app.get('/notes', async (req, res) => {
-  try {
+ 
+
+try {
     const { rows } = await pool.query('SELECT id, content, created_at FROM notes ORDER BY created_at DESC LIMIT 50');
     res.json(rows);
   } catch (error) {
