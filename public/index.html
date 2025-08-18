@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <title>Gästbok</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    #notes-list {
+      margin-top: 20px;
+      list-style: none;
+      padding: 0;
+    }
+    #notes-list li {
+      padding: 5px 0;
+      border-bottom: 1px solid #eee;
+    }
+  </style>
+</head>
+<body>
+  <h1>Gästbok</h1>
+  <input type="text" id="note-input" placeholder="Skriv en notis" />
+  <button id="save-btn">Spara</button>
+  <ul id="notes-list"></ul>
+
+  <script>
+    async function fetchNotes() {
+      const res = await fetch('/notes');
+      const notes = await res.json();
+      const list = document.getElementById('notes-list');
+      list.innerHTML = '';
+      notes.forEach(note => {
+        const li = document.createElement('li');
+        const date = new Date(note.created_at);
+        li.textContent = note.content + ' (' + date.toLocaleString() + ')';
+        list.appendChild(li);
+      });
+    }
+
+    document.getElementById('save-btn').addEventListener('click', async () => {
+      const input = document.getElementById('note-input');
+      const content = input.value.trim();
+      if (!content) return;
+      await fetch('/notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content })
+      });
+      input.value = '';
+      fetchNotes();
+    });
+
+    // Initial load
+    fetchNotes();
+  </script>
+</body>
+</html>
