@@ -18,6 +18,9 @@ async function migrate() {
 
   try {
     await pool.query(createTableSql);
+        await pool.query("ALTER TABLE notes ADD COLUMN IF NOT EXISTS name TEXT");
+    await pool.query("UPDATE notes SET name = 'Anonym' WHERE name IS NULL OR name = ''");
+    await pool.query("ALTER TABLE notes ALTER COLUMN name SET DEFAULT 'Anonym'");
     console.log('Migration completed.');
   } catch (err) {
     console.error('Migration failed:', err);
