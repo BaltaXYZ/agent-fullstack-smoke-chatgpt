@@ -1,59 +1,67 @@
 <!DOCTYPE html>
 <html lang="sv">
 <head>
-  <meta charset="UTF-8">
-  <title>Gästbok</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-    }
-    #notes-list {
-      margin-top: 20px;
-      list-style: none;
-      padding: 0;
-    }
-    #notes-list li {
-      padding: 5px 0;
-      border-bottom: 1px solid #eee;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Gästbok</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 20px; }
+  #notes-list { margin-top: 20px; list-style: none; padding: 0; }
+  #notes-list li { padding: 5px 0; border-bottom: 1px solid #eee; }
+</style>
 </head>
 <body>
   <h1>Gästbok</h1>
+  <input type="text" id="name-input" placeholder="Ditt namn (valfritt)" />
   <input type="text" id="note-input" placeholder="Skriv en notis" />
   <button id="save-btn">Spara</button>
   <ul id="notes-list"></ul>
-
-  <script>
-    async function fetchNotes() {
-      const res = await fetch('/notes');
-      const notes = await res.json();
-      const list = document.getElementById('notes-list');
-      list.innerHTML = '';
-      notes.forEach(note => {
-        const li = document.createElement('li');
-        const date = new Date(note.created_at);
-        li.textContent = note.content + ' (' + date.toLocaleString() + ')';
-        list.appendChild(li);
+<script>
+  async function fetchNotes() {
+    const res = await fetch('/notes');
+    const data = await res.json();
+    const list = document.getElementById('notes-list');
+    list.innerHTML = '';
+    data.forEach(note => {
+      const li = document.createElement('li');
+      const date = new Date(note.created_at);
+      li.textContent = (note.name || 'Anonym') + ': ' + note.content + ' (' + date.toLocaleString() + ') ';
+      const editBtn = document.createElement('button');
+      editBtn.textContent = 'Redigera';
+      editBtn.addEventListener('click', async () => {
+        const newName = prompt('Nytt namn:', note.name || 'Anonym');
+        const newContent = prompt('Nytt innehåll:', note.content);
+        if (newName === null && newContent === null) return;
+        const body = {};
+        if (newName !== null) body.name = newName.trim() || 'Anonym';
+        if (newContent !== null) body.content = newContent.trim();
+        await fetch('/notes/' + note.id, { method:'PATCH', headers: { 'Content-Type':'application/json' }, body: JSON.stringify(body) });
+        fetchNotes();
       });
-    }
-
-    document.getElementById('save-btn').addEventListener('click', async () => {
-      const input = document.getElementById('note-input');
-      const content = input.value.trim();
-      if (!content) return;
-      await fetch('/notes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content })
+      const delBtn = document.createElement('button');
+      delBtn.textContent = 'Ta bort';
+      delBtn.addEventListener('click', async () => {
+        if (confirm('Ar du säker på att du vill ta bort denna notis?')) {
+          await fetch('/notes/' + note.id, { method:'DELETE' });
+          fetchNotes();
+        }
       });
-      input.value = '';
-      fetchNotes();
+      li.appendChild(editBtn);
+      li.appendChild(delBtn);
+      list.appendChild(li);
     });
-
-    // Initial load
+  }
+  document.getElementById('save-btn').addEventListener('click', async () => {
+    const nameInput = document.getElementById('name-input');
+    const noteInput = document.getElementById('note-input');
+    const name = nameInput.value.trim() || 'Anonym';
+    const content = noteInput.value.trim();
+    if (!content) return;
+    await fetch('/notes', { method:'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({ name, content }) });
+    nameInput.value = '';
+    noteInput.value = '';
     fetchNotes();
-  </script>
+  });
+  fetchNotes();
+</script>
 </body>
 </html>
