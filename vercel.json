@@ -1,0 +1,15 @@
+{
+  "functions": {
+    "api/*.js": { "runtime": "nodejs20.x" }
+  },
+  "builds": [
+    { "src": "api/app.js", "use": "@vercel/node" },
+    { "src": "public/**", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "^/(health|notes)$", "dest": "/api/app.js" },
+    { "src": "^/notes/(.*)$", "dest": "/api/app.js" },
+    { "src": "^/$", "dest": "/public/index.html" },
+    { "src": "^(.*)$", "dest": "/public/$1" }
+  ]
+}
